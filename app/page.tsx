@@ -6,16 +6,27 @@ import { ShieldAlert, Radio, CheckCircle2, XCircle } from 'lucide-react';
 
 const MapComponent = dynamic(() => import('../components/MapComponent'), { ssr: false });
 
-// --- THE BULLETPROOF EVENT BRIDGE ---
-// This executes synchronously outside of React, so the fast AI Agent sees it instantly!
+// --- 1. THE WEBMCP POLYFILL & EVENT BRIDGE ---
 if (typeof window !== 'undefined') {
   const win = window as any;
+  const doc = document as any;
+  
   win.__WEBMCP_EMITTER__ = win.__WEBMCP_EMITTER__ || new EventTarget();
+
+  // POLYFILL: If the ChatGPT embedded browser doesn't have WebMCP enabled, we create it!
+  if (!doc.modelContext) {
+    doc.modelContext = {
+      tools: {},
+      registerTool: function(tool: any) {
+        this.tools[tool.name] = tool;
+      }
+    };
+  }
   
   const registerAgentTools = () => {
-    if (typeof document !== 'undefined' && (document as any).modelContext && !win.__WEBMCP_REGISTERED) {
+    if (doc.modelContext && !win.__WEBMCP_REGISTERED) {
       win.__WEBMCP_REGISTERED = true;
-      const mc = (document as any).modelContext;
+      const mc = doc.modelContext;
       
       try {
         mc.registerTool({
@@ -24,7 +35,7 @@ if (typeof window !== 'undefined') {
           inputSchema: { type: "object", properties: { name: { type: "string" }, lat: { type: "number" }, lng: { type: "number" }, radius: { type: "number" } }, required: ["name", "lat", "lng", "radius"] },
           execute: async (input: any) => {
             win.__WEBMCP_EMITTER__.dispatchEvent(new CustomEvent('agentAction', { detail: { type: 'HAZARD', data: input } }));
-            return { status: "success", message: "Hazard drafted." };
+            return { status: "success" };
           }
         });
 
@@ -34,7 +45,7 @@ if (typeof window !== 'undefined') {
           inputSchema: { type: "object", properties: { unit_id: { type: "string" }, new_status: { type: "string" } }, required: ["unit_id", "new_status"] },
           execute: async (input: any) => {
             win.__WEBMCP_EMITTER__.dispatchEvent(new CustomEvent('agentAction', { detail: { type: 'UNIT_STATUS', data: input } }));
-            return { status: "success", message: "Unit status updated." };
+            return { status: "success" };
           }
         });
 
@@ -44,7 +55,7 @@ if (typeof window !== 'undefined') {
           inputSchema: { type: "object", properties: { sector: { type: "string" }, message: { type: "string" } }, required: ["sector", "message"] },
           execute: async (input: any) => {
             win.__WEBMCP_EMITTER__.dispatchEvent(new CustomEvent('agentAction', { detail: { type: 'ALERT', data: input } }));
-            return { status: "success", message: "Alert drafted." };
+            return { status: "success" };
           }
         });
       } catch (e) {
@@ -53,10 +64,8 @@ if (typeof window !== 'undefined') {
     }
   };
 
-  // Attempt registration immediately, and repeatedly in case of slow injection
+  // Run instantly
   registerAgentTools();
-  setTimeout(registerAgentTools, 500);
-  setTimeout(registerAgentTools, 1500);
 }
 
 
