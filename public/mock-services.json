@@ -1,0 +1,38 @@
+[
+  {
+    "categoryId": "backend",
+    "name": "Backend Development",
+    "tiers": [
+      { "tierId": "custom-node", "label": "Custom Node.js/Postgres", "cost": 2500, "qualityNote": "Fully scalable, custom API endpoints." },
+      { "tierId": "headless-cms", "label": "Headless CMS (Strapi/Sanity)", "cost": 1500, "qualityNote": "Faster setup, relies on CMS API limits." },
+      { "tierId": "webflow-logic", "label": "Webflow Native Logic", "cost": 800, "qualityNote": "Limited to Webflow's native database constraints." }
+    ]
+  },
+  {
+    "categoryId": "frontend",
+    "name": "Frontend Development",
+    "tiers": [
+      { "tierId": "custom-next", "label": "Custom Next.js + Tailwind", "cost": 2000, "qualityNote": "Pixel-perfect, highly optimized, custom animations." },
+      { "tierId": "template-customized", "label": "Premium Template Customization", "cost": 1000, "qualityNote": "Faster delivery, bound by template structure." },
+      { "tierId": "basic-html", "label": "Basic HTML/CSS Landing Page", "cost": 500, "qualityNote": "Static, no dynamic routing or advanced interactivity." }
+    ]
+  },
+  {
+    "categoryId": "design",
+    "name": "UI/UX Design",
+    "tiers": [
+      { "tierId": "full-custom", "label": "Full Custom Figma Design", "cost": 1500, "qualityNote": "5 revision rounds, complete design system." },
+      { "tierId": "wireframe-plus", "label": "Wireframes + UI Polish", "cost": 800, "qualityNote": "2 revision rounds, uses existing brand guidelines." },
+      { "tierId": "template-ui", "label": "Template UI Adaptation", "cost": 300, "qualityNote": "No custom design, direct adaptation of chosen template." }
+    ]
+  },
+  {
+    "categoryId": "hosting",
+    "name": "Hosting & Deployment",
+    "tiers": [
+      { "tierId": "managed-vps", "label": "Managed VPS (DigitalOcean/AWS)", "cost": 500, "qualityNote": "High performance, includes CI/CD pipeline setup." },
+      { "tierId": "vercel-pro", "label": "Vercel Pro / Netlify Pro", "cost": 200, "qualityNote": "Serverless, great for Next.js, usage-based scaling." },
+      { "tierId": "shared-basic", "label": "Basic Shared Hosting", "cost": 50, "qualityNote": "Low cost, but slower load times and limited bandwidth." }
+    ]
+  }
+]
