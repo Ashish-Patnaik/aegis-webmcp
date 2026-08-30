@@ -1,73 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ShieldAlert, Radio, CheckCircle2, XCircle } from 'lucide-react';
 
 const MapComponent = dynamic(() => import('../components/MapComponent'), { ssr: false });
-
-// --- 1. THE WEBMCP POLYFILL & EVENT BRIDGE ---
-if (typeof window !== 'undefined') {
-  const win = window as any;
-  const doc = document as any;
-  
-  win.__WEBMCP_EMITTER__ = win.__WEBMCP_EMITTER__ || new EventTarget();
-
-  // POLYFILL: If the ChatGPT embedded browser doesn't have WebMCP enabled, we create it!
-  if (!doc.modelContext) {
-    doc.modelContext = {
-      tools: {},
-      registerTool: function(tool: any) {
-        this.tools[tool.name] = tool;
-      }
-    };
-  }
-  
-  const registerAgentTools = () => {
-    if (doc.modelContext && !win.__WEBMCP_REGISTERED) {
-      win.__WEBMCP_REGISTERED = true;
-      const mc = doc.modelContext;
-      
-      try {
-        mc.registerTool({
-          name: "draft_hazard_zone",
-          description: "Draft a new hazard zone on the map.",
-          inputSchema: { type: "object", properties: { name: { type: "string" }, lat: { type: "number" }, lng: { type: "number" }, radius: { type: "number" } }, required: ["name", "lat", "lng", "radius"] },
-          execute: async (input: any) => {
-            win.__WEBMCP_EMITTER__.dispatchEvent(new CustomEvent('agentAction', { detail: { type: 'HAZARD', data: input } }));
-            return { status: "success" };
-          }
-        });
-
-        mc.registerTool({
-          name: "update_unit_status",
-          description: "Draft a status change for a unit (e.g., Code Red).",
-          inputSchema: { type: "object", properties: { unit_id: { type: "string" }, new_status: { type: "string" } }, required: ["unit_id", "new_status"] },
-          execute: async (input: any) => {
-            win.__WEBMCP_EMITTER__.dispatchEvent(new CustomEvent('agentAction', { detail: { type: 'UNIT_STATUS', data: input } }));
-            return { status: "success" };
-          }
-        });
-
-        mc.registerTool({
-          name: "draft_evacuation_alert",
-          description: "Draft an emergency broadcast alert.",
-          inputSchema: { type: "object", properties: { sector: { type: "string" }, message: { type: "string" } }, required: ["sector", "message"] },
-          execute: async (input: any) => {
-            win.__WEBMCP_EMITTER__.dispatchEvent(new CustomEvent('agentAction', { detail: { type: 'ALERT', data: input } }));
-            return { status: "success" };
-          }
-        });
-      } catch (e) {
-        console.warn("Registration error", e);
-      }
-    }
-  };
-
-  // Run instantly
-  registerAgentTools();
-}
-
 
 export default function AegisDashboard() {
   const [units, setUnits] = useState([
@@ -81,24 +18,64 @@ export default function AegisDashboard() {
   ]);
 
   const [pendingActions, setPendingActions] = useState<any[]>([]);
+  const isRegisteredRef = useRef(false);
 
-  // React listens to the Event Bridge for Agent Actions
   useEffect(() => {
-    const win = window as any;
-    const handleAgentAction = (e: any) => {
-      const { type, data } = e.detail;
-      setPendingActions(prev => [...prev, { type, data, id: Date.now() }]);
-    };
+    const setupWebMCP = async () => {
+      if (typeof window === 'undefined') return;
 
-    if (win.__WEBMCP_EMITTER__) {
-      win.__WEBMCP_EMITTER__.addEventListener('agentAction', handleAgentAction);
-    }
-    
-    return () => {
-      if (win.__WEBMCP_EMITTER__) {
-        win.__WEBMCP_EMITTER__.removeEventListener('agentAction', handleAgentAction);
+      // 1. INJECT THE OFFICIAL HACKATHON POLYFILL
+      // This solves the 'webmcp_list_tools is unsupported' error immediately.
+      try {
+        const { initializeWebMCPPolyfill } = await import('@mcp-b/webmcp-polyfill');
+        initializeWebMCPPolyfill();
+      } catch (e) {
+        console.warn("Polyfill not found. Make sure you ran: npm install @mcp-b/webmcp-polyfill");
+      }
+
+      const doc = document as any;
+      if (!doc.modelContext || isRegisteredRef.current) return;
+      isRegisteredRef.current = true;
+      
+      const mc = doc.modelContext;
+
+      // 2. REGISTER TOOLS (Using the updated Promise-based spec)
+      try {
+        await mc.registerTool({
+          name: "draft_hazard_zone",
+          description: "Draft a new hazard zone on the map.",
+          inputSchema: { type: "object", properties: { name: { type: "string" }, lat: { type: "number" }, lng: { type: "number" }, radius: { type: "number" } }, required: ["name", "lat", "lng", "radius"] },
+          execute: async (input: any) => {
+            setPendingActions(prev => [...prev, { type: 'HAZARD', data: input, id: Date.now() }]);
+            return { status: "success" };
+          }
+        });
+
+        await mc.registerTool({
+          name: "update_unit_status",
+          description: "Draft a status change for a unit (e.g., Code Red).",
+          inputSchema: { type: "object", properties: { unit_id: { type: "string" }, new_status: { type: "string" } }, required: ["unit_id", "new_status"] },
+          execute: async (input: any) => {
+            setPendingActions(prev => [...prev, { type: 'UNIT_STATUS', data: input, id: Date.now() }]);
+            return { status: "success" };
+          }
+        });
+
+        await mc.registerTool({
+          name: "draft_evacuation_alert",
+          description: "Draft an emergency broadcast alert.",
+          inputSchema: { type: "object", properties: { sector: { type: "string" }, message: { type: "string" } }, required: ["sector", "message"] },
+          execute: async (input: any) => {
+            setPendingActions(prev => [...prev, { type: 'ALERT', data: input, id: Date.now() }]);
+            return { status: "success" };
+          }
+        });
+      } catch (error) {
+        console.warn("WebMCP Tool Registration failed:", error);
       }
     };
+
+    setupWebMCP();
   }, []);
 
   const approveAction = (action: any) => {
