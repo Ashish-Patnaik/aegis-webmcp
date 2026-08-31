@@ -39,7 +39,12 @@ export default function AegisDashboard() {
   }, [searchQuery, units]);
 
   useEffect(() => {
-    if (typeof document === 'undefined' || !document.modelContext) return;
+    if (typeof document === 'undefined') return;
+    
+    // TYPE FIX: Tell TypeScript to ignore the strict type checking for WebMCP
+    const doc = document as any;
+    if (!doc.modelContext) return;
+    
     const controller = new AbortController();
 
     const dispatchDraft = (type: PendingAction['type'], data: any) => {
@@ -48,37 +53,35 @@ export default function AegisDashboard() {
 
     (async () => {
       try {
-        await document.modelContext.registerTool({
+        await doc.modelContext.registerTool({
             name: 'draft_hazard_zone',
             description: 'Draft a new hazard zone on the map.',
             inputSchema: { type: 'object', properties: { name: { type: 'string' }, lat: { type: 'number' }, lng: { type: 'number' }, radius: { type: 'number' } }, required: ['name', 'lat', 'lng', 'radius'] },
             async execute(input: any) { dispatchDraft('HAZARD', input); return { content: [{ type: 'text', text: `Drafted hazard zone.` }] }; }
           }, { signal: controller.signal });
 
-        await document.modelContext.registerTool({
+        await doc.modelContext.registerTool({
             name: 'update_unit_status',
             description: 'Draft a status change for a unit.',
             inputSchema: { type: 'object', properties: { unit_id: { type: 'string' }, new_status: { type: 'string' } }, required: ['unit_id', 'new_status'] },
             async execute(input: any) { dispatchDraft('UNIT_STATUS', input); return { content: [{ type: 'text', text: `Drafted status change.` }] }; }
           }, { signal: controller.signal });
 
-        await document.modelContext.registerTool({
+        await doc.modelContext.registerTool({
             name: 'draft_evacuation_alert',
             description: 'Draft an emergency broadcast alert.',
             inputSchema: { type: 'object', properties: { sector: { type: 'string' }, message: { type: 'string' } }, required: ['sector', 'message'] },
             async execute(input: any) { dispatchDraft('ALERT', input); return { content: [{ type: 'text', text: `Drafted evacuation alert.` }] }; }
           }, { signal: controller.signal });
 
-        // NEW: Tool to Move a Unit!
-        await document.modelContext.registerTool({
+        await doc.modelContext.registerTool({
             name: 'relocate_unit',
             description: 'Draft an order to move an existing unit to new GPS coordinates.',
             inputSchema: { type: 'object', properties: { unit_id: { type: 'string' }, lat: { type: 'number' }, lng: { type: 'number' } }, required: ['unit_id', 'lat', 'lng'] },
             async execute(input: any) { dispatchDraft('RELOCATE', input); return { content: [{ type: 'text', text: `Drafted relocation.` }] }; }
           }, { signal: controller.signal });
 
-        // NEW: Tool to Spawn a Unit!
-        await document.modelContext.registerTool({
+        await doc.modelContext.registerTool({
             name: 'deploy_unit',
             description: 'Deploy a brand new unit to the map at specific coordinates.',
             inputSchema: { type: 'object', properties: { unit_id: { type: 'string' }, name: { type: 'string' }, lat: { type: 'number' }, lng: { type: 'number' } }, required: ['unit_id', 'name', 'lat', 'lng'] },
@@ -120,13 +123,11 @@ export default function AegisDashboard() {
       alert(`📢 Broadcast Sent to ${action.data.sector}: ${action.data.message}`);
       addNotification(`Evacuation alert broadcasted to ${action.data.sector}.`);
     }
-    // NEW: Handle Relocation!
     if (action.type === 'RELOCATE') {
       setUnits(prev => prev.map(u => u.id === action.data.unit_id ? { ...u, lat: action.data.lat, lng: action.data.lng } : u));
       setFocusedCenter([action.data.lat, action.data.lng]);
       addNotification(`Unit ${action.data.unit_id} relocated.`);
     }
-    // NEW: Handle Spawning!
     if (action.type === 'DEPLOY') {
       setUnits(prev => [...prev, { id: action.data.unit_id, name: action.data.name, lat: action.data.lat, lng: action.data.lng, status: 'Active' }]);
       setFocusedCenter([action.data.lat, action.data.lng]);
