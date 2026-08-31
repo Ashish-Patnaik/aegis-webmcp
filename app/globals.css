@@ -1,24 +1,103 @@
 @import "tailwindcss";
 @import 'leaflet/dist/leaflet.css';
 
+@theme {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+
+  --color-ink: #111111;
+  --color-paper: #FFF8EC;
+  --color-siren: #FF5A36;
+  --color-hazard: #FFD23F;
+  --color-radio: #2F6FED;
+  --color-go: #00C853;
+  --color-panel: #FFFFFF;
+
+  --shadow-brut-sm: 3px 3px 0 0 #111111;
+  --shadow-brut: 5px 5px 0 0 #111111;
+  --shadow-brut-lg: 8px 8px 0 0 #111111;
+  --shadow-brut-press: 2px 2px 0 0 #111111;
+}
+
+html, body {
+  height: 100%;
+}
+
 body {
-  background-color: #F9FAFB;
-  color: #111827;
+  background-color: var(--color-paper);
+  background-image:
+    radial-gradient(circle, #11111114 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  color: var(--color-ink);
   overflow: hidden;
 }
 
-/* The Magic Trick: Makes free OpenStreetMap look like a $10k custom SaaS map */
-.sleek-map-tiles {
-  filter: grayscale(100%) opacity(80%) contrast(110%) brightness(105%);
+* {
+  box-sizing: border-box;
 }
 
-/* Sleek Map Popups */
+/* Utility: hard brutalist border+shadow block */
+.brut {
+  border: 3px solid var(--color-ink);
+  box-shadow: var(--shadow-brut);
+  border-radius: 14px;
+}
+
+.brut-sm {
+  border: 2.5px solid var(--color-ink);
+  box-shadow: var(--shadow-brut-sm);
+  border-radius: 10px;
+}
+
+.brut-press {
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.brut-press:active {
+  transform: translate(3px, 3px);
+  box-shadow: var(--shadow-brut-press) !important;
+}
+
+/* Map tiles: desaturate + darken so hazard/unit markers pop against the grid */
+.brut-map-tiles {
+  filter: grayscale(85%) contrast(105%) brightness(102%) saturate(120%);
+}
+
+.leaflet-container {
+  font-family: inherit !important;
+  background: #E7E2D6 !important;
+}
+
 .leaflet-popup-content-wrapper {
   border-radius: 12px !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-  border: 1px solid #F3F4F6 !important;
-  padding: 4px !important;
+  border: 3px solid #111111 !important;
+  box-shadow: 5px 5px 0 0 #111111 !important;
+  padding: 2px !important;
 }
-.leaflet-popup-content { margin: 12px 16px !important; }
-.leaflet-popup-tip { background-color: white !important; }
-.leaflet-container { font-family: inherit !important; }
+.leaflet-popup-content { margin: 12px 14px !important; font-family: var(--font-body); }
+.leaflet-popup-tip {
+  background-color: white !important;
+  border: 3px solid #111111 !important;
+  box-shadow: none !important;
+}
+.leaflet-popup-close-button {
+  color: #111111 !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  top: 6px !important;
+  right: 8px !important;
+}
+
+/* custom scrollbar to match the aesthetic */
+.brut-scroll::-webkit-scrollbar { width: 10px; }
+.brut-scroll::-webkit-scrollbar-track { background: transparent; }
+.brut-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-ink);
+  border-radius: 6px;
+  border: 2px solid var(--color-paper);
+}
+
+@keyframes marker-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.pulse-dot { animation: marker-pulse 1.4s ease-in-out infinite; }

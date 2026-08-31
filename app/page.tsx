@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Search, Users, Bell, CheckCircle2 } from 'lucide-react';
+import { Search, Users, Bell, CheckCircle2, Crosshair } from 'lucide-react';
 import '@mcp-b/webmcp-polyfill';
 import Sidebar from '../components/Sidebar';
 
@@ -23,32 +23,26 @@ export default function AegisDashboard() {
   ]);
 
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
-  
-  // NEW FUNCTIONALITY STATES
+
   const [searchQuery, setSearchQuery] = useState("");
   const [focusedCenter, setFocusedCenter] = useState<[number, number] | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  
-  const isRegisteredRef = useRef(false);
 
-  // SEARCH LOGIC: Watch the search bar and pan the map if a unit is found
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
-      const foundUnit = units.find(u => 
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const foundUnit = units.find(u =>
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.id.toLowerCase().includes(searchQuery.toLowerCase())
       );
       if (foundUnit) setFocusedCenter([foundUnit.lat, foundUnit.lng]);
     }
   }, [searchQuery, units]);
 
-
-  // WEBMCP REGISTRATION
   useEffect(() => {
     if (typeof document === 'undefined' || !document.modelContext) return;
     const controller = new AbortController();
-    
+
     const dispatchDraft = (type: PendingAction['type'], data: any) => {
       window.dispatchEvent(new CustomEvent('aegis-agent-action', { detail: { type, data } }));
     };
@@ -82,7 +76,6 @@ export default function AegisDashboard() {
     return () => controller.abort();
   }, []);
 
-  // STATE MANAGEMENT
   useEffect(() => {
     const handleAgentAction = (e: Event) => {
       const { type, data } = (e as CustomEvent).detail;
@@ -100,7 +93,7 @@ export default function AegisDashboard() {
   const approveAction = (action: PendingAction) => {
     if (action.type === 'HAZARD') {
       setHazards(prev => [...prev, { id: `H${Date.now()}`, ...action.data }]);
-      setFocusedCenter([action.data.lat, action.data.lng]); // Pan to new hazard!
+      setFocusedCenter([action.data.lat, action.data.lng]);
       addNotification(`Hazard "${action.data.name}" added to map.`);
     }
     if (action.type === 'UNIT_STATUS') {
@@ -117,73 +110,82 @@ export default function AegisDashboard() {
   const rejectAction = (actionId: number) => setPendingActions(prev => prev.filter(a => a.id !== actionId));
 
   return (
-    <main className="flex flex-col-reverse lg:flex-row h-[100dvh] w-full bg-gray-50 font-sans text-gray-900 overflow-hidden">
-      
-      <Sidebar 
-        units={units} 
-        pendingActions={pendingActions} 
-        approveAction={approveAction} 
-        rejectAction={rejectAction} 
+    <main className="flex flex-col-reverse lg:flex-row h-[100dvh] w-full bg-[var(--color-paper)] font-[family-name:var(--font-body)] text-black overflow-hidden">
+
+      <Sidebar
+        units={units}
+        pendingActions={pendingActions}
+        approveAction={approveAction}
+        rejectAction={rejectAction}
       />
 
-      <div className="flex-1 w-full h-[50dvh] lg:h-full relative flex flex-col z-0">
-        
+      <div className="flex-1 w-full h-[48dvh] lg:h-full relative flex flex-col z-0">
+
         {/* Floating Top Bar */}
-        <div className="absolute top-4 inset-x-4 z-10 hidden md:flex justify-between items-start pointer-events-none">
-          
-          {/* FUNCTIONAL SEARCH BAR */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-2.5 flex items-center gap-3 pointer-events-auto w-96 transition-all focus-within:ring-2 focus-within:ring-blue-500">
-            <Search className="w-4 h-4 text-gray-400 ml-2" />
-            <input 
-              type="text" 
+        <div className="absolute top-4 inset-x-4 z-10 hidden md:flex justify-between items-start pointer-events-none gap-3">
+
+          {/* Search Bar */}
+          <div className="bg-white rounded-2xl border-3 border-black shadow-[5px_5px_0_0_#111] p-2.5 flex items-center gap-3 pointer-events-auto w-96 transition-transform focus-within:-translate-y-0.5">
+            <div className="bg-[var(--color-hazard)] p-1.5 rounded-lg border-2 border-black flex-shrink-0">
+              <Search className="w-4 h-4 text-black" strokeWidth={2.5} />
+            </div>
+            <input
+              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search unit (e.g. 'E4' or 'Engine')..." 
-              className="flex-1 text-sm outline-none text-gray-700 bg-transparent placeholder-gray-400"
+              placeholder="Search unit (e.g. 'E4' or 'Engine')..."
+              className="flex-1 text-sm outline-none text-black bg-transparent placeholder-black/40 font-medium"
             />
           </div>
 
           <div className="flex gap-3 pointer-events-auto relative">
-            {/* CLICKABLE ACTIVE UNITS: Resets the map view to the center of LA */}
-            <button 
+            {/* Active Units button — resets map to LA center */}
+            <button
               onClick={() => setFocusedCenter([34.0522, -118.2437])}
-              className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors"
+              className="bg-white rounded-2xl border-3 border-black shadow-[4px_4px_0_0_#111] px-4 py-2.5 flex items-center gap-3 brut-press"
+              title="Recenter map"
             >
-              <div className="bg-blue-50 text-blue-600 p-1.5 rounded-lg"><Users className="w-4 h-4" /></div>
+              <div className="bg-[var(--color-radio)] text-white p-1.5 rounded-lg border-2 border-black">
+                <Crosshair className="w-4 h-4" strokeWidth={2.5} />
+              </div>
               <div className="text-left">
-                <div className="text-[10px] font-semibold text-gray-400 uppercase">Active Units</div>
-                <div className="text-sm font-bold text-gray-900">{units.length} Deployed</div>
+                <div className="text-[10px] font-bold text-black/50 uppercase tracking-wider">Active Units</div>
+                <div className="text-sm font-extrabold text-black">{units.length} Deployed</div>
               </div>
             </button>
 
-            {/* FUNCTIONAL BELL ICON */}
-            <button 
+            {/* Bell */}
+            <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 p-2.5 flex items-center justify-center hover:bg-gray-50 transition-colors relative"
+              className="bg-white rounded-2xl border-3 border-black shadow-[4px_4px_0_0_#111] p-2.5 flex items-center justify-center brut-press relative"
             >
-              <Bell className="w-5 h-5 text-gray-600" />
+              <Bell className="w-5 h-5 text-black" strokeWidth={2.5} />
               {notifications.length > 0 && (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-[var(--color-siren)] rounded-full border-2 border-black flex items-center justify-center text-[10px] font-extrabold text-white">
+                  {notifications.length}
+                </span>
               )}
             </button>
 
-            {/* NOTIFICATIONS DROPDOWN */}
+            {/* Notifications dropdown */}
             {showNotifications && (
-              <div className="absolute top-14 right-0 w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 font-bold text-sm text-gray-700 flex justify-between">
+              <div className="absolute top-16 right-0 w-80 bg-white rounded-2xl border-3 border-black shadow-[6px_6px_0_0_#111] overflow-hidden z-50">
+                <div className="bg-[var(--color-hazard)] px-4 py-3 border-b-3 border-black font-extrabold text-sm text-black flex justify-between items-center">
                   Action History
-                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">{notifications.length}</span>
+                  <span className="text-xs bg-black text-white font-extrabold px-2 py-0.5 rounded-full">{notifications.length}</span>
                 </div>
-                <div className="max-h-64 overflow-y-auto p-2">
+                <div className="max-h-64 overflow-y-auto p-2 brut-scroll">
                   {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-gray-500">No recent actions.</div>
+                    <div className="p-6 text-center text-sm font-medium text-black/40">No recent actions.</div>
                   ) : (
                     notifications.map(note => (
-                      <div key={note.id} className="p-3 hover:bg-gray-50 rounded-lg flex gap-3 transition-colors">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <div key={note.id} className="p-3 hover:bg-[var(--color-paper)] rounded-xl flex gap-3 transition-colors">
+                        <div className="bg-[var(--color-go)] p-1 rounded-md border-2 border-black flex-shrink-0 h-fit">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                        </div>
                         <div>
-                          <div className="text-xs font-semibold text-gray-800">{note.message}</div>
-                          <div className="text-[10px] text-gray-400 mt-1">{note.time}</div>
+                          <div className="text-xs font-bold text-black">{note.message}</div>
+                          <div className="text-[10px] text-black/40 mt-1 font-semibold uppercase tracking-wide">{note.time}</div>
                         </div>
                       </div>
                     ))
@@ -194,7 +196,32 @@ export default function AegisDashboard() {
           </div>
         </div>
 
-        {/* Map Component Container */}
+        {/* Mobile-only compact top bar */}
+        <div className="absolute top-3 inset-x-3 z-10 flex md:hidden justify-between items-center gap-2 pointer-events-none">
+          <div className="bg-white rounded-xl border-3 border-black shadow-[3px_3px_0_0_#111] px-3 py-2 flex items-center gap-2 pointer-events-auto flex-1">
+            <Search className="w-4 h-4 text-black/50 flex-shrink-0" strokeWidth={2.5} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search unit..."
+              className="flex-1 text-sm outline-none text-black bg-transparent placeholder-black/40 min-w-0"
+            />
+          </div>
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="bg-white rounded-xl border-3 border-black shadow-[3px_3px_0_0_#111] p-2.5 flex-shrink-0 pointer-events-auto relative"
+          >
+            <Bell className="w-4 h-4 text-black" strokeWidth={2.5} />
+            {notifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--color-siren)] rounded-full border-2 border-black flex items-center justify-center text-[8px] font-extrabold text-white">
+                {notifications.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Map */}
         <div className="w-full h-full relative z-0">
           <MapComponent units={units} hazards={hazards} focusedCenter={focusedCenter} />
         </div>
