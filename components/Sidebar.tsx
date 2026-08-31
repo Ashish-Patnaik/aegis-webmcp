@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldAlert, Radio, CheckCircle2, XCircle, Truck, Flame, Megaphone } from 'lucide-react';
+import { ShieldAlert, Radio, CheckCircle2, XCircle, Truck, Flame, Megaphone, MapPin, PlusSquare } from 'lucide-react';
 
 export default function Sidebar({ units, pendingActions, approveAction, rejectAction }: any) {
   return (
@@ -93,8 +93,11 @@ export default function Sidebar({ units, pendingActions, approveAction, rejectAc
                   HAZARD: { icon: Flame, color: 'var(--color-siren)', label: 'Hazard Draft' },
                   UNIT_STATUS: { icon: Truck, color: 'var(--color-radio)', label: 'Unit Status' },
                   ALERT: { icon: Megaphone, color: '#8B5CF6', label: 'Evac Alert' },
-                }[action.type as 'HAZARD' | 'UNIT_STATUS' | 'ALERT'];
+                  RELOCATE: { icon: MapPin, color: '#F59E0B', label: 'Relocate Unit' },
+                  DEPLOY: { icon: PlusSquare, color: 'var(--color-go)', label: 'Deploy Unit' },
+                }[action.type as 'HAZARD' | 'UNIT_STATUS' | 'ALERT' | 'RELOCATE' | 'DEPLOY'];
                 const Icon = meta.icon;
+                
                 return (
                   <div key={action.id} className="bg-white rounded-2xl p-4 border-3 border-black shadow-[5px_5px_0_0_#111]">
                     <div className="flex items-center gap-2 mb-3">
@@ -113,6 +116,8 @@ export default function Sidebar({ units, pendingActions, approveAction, rejectAc
                       {action.type === 'HAZARD' && `Draw "${action.data.name}" at [${action.data.lat.toFixed(3)}, ${action.data.lng.toFixed(3)}]`}
                       {action.type === 'UNIT_STATUS' && `Update ${action.data.unit_id} to ${action.data.new_status}`}
                       {action.type === 'ALERT' && `Broadcast to ${action.data.sector}`}
+                      {action.type === 'RELOCATE' && `Move ${action.data.unit_id} to [${action.data.lat.toFixed(3)}, ${action.data.lng.toFixed(3)}]`}
+                      {action.type === 'DEPLOY' && `Spawn ${action.data.name} (${action.data.unit_id}) at [${action.data.lat.toFixed(3)}, ${action.data.lng.toFixed(3)}]`}
                     </div>
 
                     <div className="flex gap-2">
