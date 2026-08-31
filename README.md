@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ Aegis: Agent-Native Disaster Response GIS
 
-## Getting Started
+**Built for The WebMCP Challenge by OpenAI**
 
-First, run the development server:
+Aegis is a human-in-the-loop, WebMCP-powered emergency dispatch system. It transforms chaotic, real-time crisis data (like frantic radio transcripts) into precise, deterministic map states using an AI Agent—while ensuring human commanders retain ultimate authority over life-and-death decisions.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌟 Why WebMCP?
+Traditional GIS (Geographic Information Systems) are incredibly complex and slow to navigate during an active crisis. Without WebMCP, an AI agent would have to clumsily scrape the DOM or guess how to interact with a complex map canvas. 
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+By implementing the WebMCP open standard, Aegis exposes its internal React state and Leaflet map engine directly to the AI as structured tools. The agent orchestrates the semantic reasoning, while our deterministic UI handles the geospatial rendering. 
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🤝 The Human-in-the-Loop Architecture
+Aegis does not allow the LLM to mutate the production map blindly. We utilize a strict **Agent-Native Event Bridge**. 
+1. The Agent calls a WebMCP tool (e.g., `draft_hazard_zone`).
+2. The tool fires a `CustomEvent` to the React UI.
+3. The UI presents the proposed action in the "Pending Actions" queue.
+4. The human dispatcher visually verifies the coordinates and clicks **Approve**, shifting the state to the live Mapbox canvas.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ WebMCP Implementation
+We implemented the official WebMCP specification using the `@mcp-b/webmcp-polyfill` to ensure compatibility across Chrome's native DevTools and ChatGPT's in-app browsers. 
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Here is how we expose our tools to the agent:
+```javascript
+await document.modelContext.registerTool({
+  name: "draft_hazard_zone",
+  description: "Draft a new hazard zone on the map for human approval.",
+  inputSchema: { 
+    type: "object", 
+    properties: { 
+      name: { type: "string" }, 
+      lat: { type: "number" }, 
+      lng: { type: "number" }, 
+      radius: { type: "number" } 
+    }, 
+    required: ["name", "lat", "lng", "radius"] 
+  },
+  execute: async (input) => {
+    window.dispatchEvent(new CustomEvent('aegis-agent-action', { 
+      detail: { type: 'HAZARD', data: input } 
+    }));
+    return { content: [{ type: 'text', text: "Drafted hazard zone." }] };
+  }
+});

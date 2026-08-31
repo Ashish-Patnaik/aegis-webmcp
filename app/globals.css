@@ -1,9 +1,24 @@
+@import "tailwindcss";
 @import 'leaflet/dist/leaflet.css';
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 body {
-  background-color: #0f172a;
-  color: white;
+  background-color: #F9FAFB;
+  color: #111827;
+  overflow: hidden;
 }
+
+/* The Magic Trick: Makes free OpenStreetMap look like a $10k custom SaaS map */
+.sleek-map-tiles {
+  filter: grayscale(100%) opacity(80%) contrast(110%) brightness(105%);
+}
+
+/* Sleek Map Popups */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #F3F4F6 !important;
+  padding: 4px !important;
+}
+.leaflet-popup-content { margin: 12px 16px !important; }
+.leaflet-popup-tip { background-color: white !important; }
+.leaflet-container { font-family: inherit !important; }
