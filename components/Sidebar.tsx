@@ -8,9 +8,16 @@ export default function Sidebar({ units, pendingActions, approveAction, rejectAc
 
       {/* Header */}
       <div className="h-[72px] flex items-center gap-3 px-4 lg:px-5 border-b-4 border-black flex-shrink-0 bg-[var(--color-hazard)]">
-        <div className="bg-[var(--color-ink)] p-2 rounded-xl border-2 border-black shadow-[3px_3px_0_0_#111] rotate-[-4deg]">
-          <ShieldAlert className="text-[var(--color-hazard)] w-5 h-5" strokeWidth={2.5} />
+        
+        {/* White brutalist box matches the WebMCP pill and makes the transparent logo pop! */}
+        <div className="bg-white p-1.5 rounded-xl border-2 border-black shadow-[3px_3px_0_0_#111] rotate-[-4deg] flex items-center justify-center">
+          <img 
+            src="/t.png" 
+            alt="Aegis Logo" 
+            className="w-7 h-7 object-contain drop-shadow-[1px_1px_0px_rgba(0,0,0,0.2)]" 
+          />
         </div>
+        
         <h1 className="text-2xl font-bold tracking-tight text-black font-[family-name:var(--font-display)]">
           Aegis
         </h1>

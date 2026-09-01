@@ -16,6 +16,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Aegis Command",
   description: "Emergency response dispatch dashboard",
+  icons: {
+    icon: '/t.png', // <--- This line adds your logo to the browser tab!
+  },
+
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
