@@ -153,7 +153,3 @@ The transcript step is currently manual. The next version replaces it with live 
 ## 📄 License
 
 Aegis is open source under the [MIT License](LICENSE).
-
-<p align="center">
-  <sub>Built for <a href="https://openai.com">The WebMCP Challenge by OpenAI</a></sub>
-</p>
